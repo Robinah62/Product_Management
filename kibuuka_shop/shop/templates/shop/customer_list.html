@@ -1,0 +1,88 @@
+{% extends 'shop/base.html' %}
+{% block title %}Customers – Kibuuka's Shop{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <div class="page-title"><i class="fa-solid fa-users me-2" style="color:var(--espresso)"></i>Customers</div>
+        <div class="page-subtitle">Manage customers and Ka Money savings</div>
+    </div>
+    <a href="{% url 'add_customer' %}" class="btn btn-primary">
+        <i class="fa-solid fa-user-plus me-1"></i> Add Customer
+    </a>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2">
+            <div class="col-12 col-sm-8">
+                <input type="text" name="q" class="form-control" placeholder="Search by name..." value="{{ query }}">
+            </div>
+            <div class="col-12 col-sm-4">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-search me-1"></i>Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Contact</th>
+                        <th>Ka Money</th>
+                        <th>Mobile Purchases</th>
+                        <th>Redeemable?</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td class="fw-bold">{{ customer.name }}</td>
+                        <td class="text-muted">{{ customer.contact|default:"—" }}</td>
+                        <td>
+                            <span class="ka-money-badge">
+                                <i class="fa-solid fa-jar me-1"></i>{{ customer.ka_money_balance|floatformat:0 }} UGX
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-fill" style="height:6px;min-width:60px">
+                                    <div class="progress-bar" style="width:{% widthratio customer.mobile_money_purchases 10 100 %}%;background:var(--terra)"></div>
+                                </div>
+                                <span class="small text-muted">{{ customer.mobile_money_purchases }}/10</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if customer.ka_money_redeemable %}
+                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Yes!</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Not yet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="fa-solid fa-users fa-2x mb-2 d-block"></i>
+                            No customers yet. <a href="{% url 'add_customer' %}">Add first customer</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

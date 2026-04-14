@@ -1,0 +1,141 @@
+{% extends 'shop/base.html' %}
+{% block title %}{{ customer.name }} – Kibuuka's Shop{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'customer_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <div>
+        <div class="page-title">{{ customer.name }}</div>
+        <div class="page-subtitle">
+            {% if customer.contact %}<i class="fa-solid fa-phone me-1"></i>{{ customer.contact }}{% endif %}
+            {% if customer.address %} &bull; <i class="fa-solid fa-location-dot me-1"></i>{{ customer.address }}{% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Ka Money Card -->
+<div class="card mb-4" style="background:linear-gradient(135deg,var(--terra),#e67e22);color:var(--white);border:none">
+    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="fa-solid fa-jar fa-lg"></i>
+                <span style="font-size:1.1rem;font-weight:800;font-family:'Poppins',sans-serif">Ka Money Savings Jar</span>
+            </div>
+            <div style="font-size:2rem;font-weight:800;font-family:'Poppins',sans-serif">{{ customer.ka_money_balance|floatformat:0 }} UGX</div>
+            <div style="opacity:.85;font-size:.85rem">
+                {{ customer.mobile_money_purchases }}/10 mobile money purchases
+                &bull; Earns 500 UGX per mobile money transaction
+            </div>
+        </div>
+        {% if customer.ka_money_redeemable %}
+        <a href="{% url 'redeem_ka_money' customer.pk %}" class="btn btn-light fw-bold" style="color:var(--terra)">
+            <i class="fa-solid fa-gift me-1"></i> Redeem Now!
+        </a>
+        {% else %}
+        <div class="text-center" style="opacity:.8">
+            <div style="font-size:1.5rem;font-weight:800">{{ customer.mobile_money_purchases }}/10</div>
+            <div style="font-size:.8rem">purchases to redeem</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Credit History -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header fw-bold"><i class="fa-solid fa-hand-holding-dollar me-2" style="color:var(--espresso)"></i>Credit History</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0" style="font-size:.85rem">
+                        <thead class="table-light">
+                            <tr><th>Product</th><th>Total</th><th>Balance</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            {% for credit in credits %}
+                            <tr>
+                                <td>{{ credit.product.name|default:"—" }}</td>
+                                <td>{{ credit.total_amount|floatformat:0 }}</td>
+                                <td class="{% if credit.balance_due > 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                                    {{ credit.balance_due|floatformat:0 }}
+                                </td>
+                                <td><span class="badge badge-{{ credit.status }}">{{ credit.get_status_display }}</span></td>
+                                <td><a href="{% url 'credit_detail' credit.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></a></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No credit records</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase History -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header fw-bold"><i class="fa-solid fa-receipt me-2" style="color:var(--espresso)"></i>Purchase History</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0" style="font-size:.85rem">
+                        <thead class="table-light">
+                            <tr><th>Product</th><th>Qty</th><th>Amount</th><th>Method</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in sales %}
+                            <tr>
+                                <td>{{ sale.product.name|default:"—" }}</td>
+                                <td>{{ sale.quantity }}</td>
+                                <td class="fw-bold text-success">{{ sale.total_amount|floatformat:0 }}</td>
+                                <td>
+                                    {% if sale.payment_method == 'mobile_money' %}
+                                    <span class="badge bg-primary" style="font-size:.7rem">MM</span>
+                                    {% elif sale.payment_method == 'cash' %}
+                                    <span class="badge bg-success" style="font-size:.7rem">Cash</span>
+                                    {% else %}
+                                    <span class="badge bg-danger" style="font-size:.7rem">Credit</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted">{{ sale.sold_at|date:"d M" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No purchases yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Redemption History -->
+    {% if redemptions %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header fw-bold"><i class="fa-solid fa-gift me-2" style="color:var(--terra)"></i>Ka Money Redemptions</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                            <tr><th>Amount Redeemed</th><th>Date</th><th>Processed By</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for r in redemptions %}
+                            <tr>
+                                <td class="fw-bold" style="color:var(--terra)">{{ r.amount_redeemed|floatformat:0 }} UGX</td>
+                                <td>{{ r.redeemed_at|date:"d M Y" }}</td>
+                                <td>{{ r.processed_by.username|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

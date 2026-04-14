@@ -1,0 +1,100 @@
+{% extends 'shop/base.html' %}
+{% block title %}Credit Detail – Kibuuka's Shop{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'credit_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <div>
+        <div class="page-title">Credit – {{ credit.customer.name }}</div>
+        <div class="page-subtitle">Issued {{ credit.date_issued|date:"d M Y" }} &bull; Due {{ credit.repayment_date|date:"d M Y" }}</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Credit Summary -->
+    <div class="col-md-5">
+        <div class="card mb-3">
+            <div class="card-header fw-bold"><i class="fa-solid fa-file-invoice-dollar me-2" style="color:var(--espresso)"></i>Credit Details</div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0" style="font-size:.9rem">
+                    <tr><td class="text-muted">Customer</td><td class="fw-bold">{{ credit.customer.name }}</td></tr>
+                    <tr><td class="text-muted">Product</td><td>{{ credit.product.name|default:"—" }}</td></tr>
+                    <tr><td class="text-muted">Quantity</td><td>{{ credit.quantity }}</td></tr>
+                    <tr><td class="text-muted">Unit Price</td><td>{{ credit.unit_price|floatformat:0 }} UGX</td></tr>
+                    <tr><td class="text-muted">Total</td><td class="fw-bold">{{ credit.total_amount|floatformat:0 }} UGX</td></tr>
+                    <tr><td class="text-muted">Paid</td><td class="fw-bold text-success">{{ credit.amount_paid|floatformat:0 }} UGX</td></tr>
+                    <tr><td class="text-muted">Balance Due</td>
+                        <td class="fw-bold {% if credit.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ credit.balance_due|floatformat:0 }} UGX
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">Status</td>
+                        <td><span class="badge badge-{{ credit.status }} px-2 py-1">{{ credit.get_status_display }}</span></td>
+                    </tr>
+                </table>
+                {% if credit.notes %}
+                <div class="mt-3 p-3 rounded" style="background:#f8fafc;font-size:.85rem">
+                    <i class="fa-solid fa-note-sticky me-1 text-muted"></i>{{ credit.notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Record Payment -->
+        {% if credit.status != 'paid' %}
+        <div class="card">
+            <div class="card-header fw-bold"><i class="fa-solid fa-money-bill-wave me-2" style="color:var(--success)"></i>Record Payment</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in pay_form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fa-solid fa-check me-1"></i> Record Payment
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Payment History -->
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header fw-bold"><i class="fa-solid fa-clock-rotate-left me-2" style="color:var(--espresso)"></i>Payment History</div>
+            <div class="card-body p-0">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                            <tr><th>Date</th><th>Amount (UGX)</th><th>Received By</th><th>Notes</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td class="text-muted small">{{ payment.paid_at|date:"d M Y, H:i" }}</td>
+                                <td class="fw-bold text-success">{{ payment.amount|floatformat:0 }}</td>
+                                <td>{{ payment.received_by.username|default:"—" }}</td>
+                                <td class="text-muted small">{{ payment.notes|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fa-solid fa-money-bill fa-2x mb-2 d-block"></i>
+                    No payments recorded yet
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

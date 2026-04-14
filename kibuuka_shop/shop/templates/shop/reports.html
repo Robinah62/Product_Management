@@ -1,0 +1,187 @@
+{% extends 'shop/base.html' %}
+{% block title %}Reports – Kibuuka's Shop{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <div class="page-title"><i class="fa-solid fa-chart-line me-2" style="color:var(--espresso)"></i>Weekly Reports</div>
+        <div class="page-subtitle">{{ week_ago|date:"d M" }} – {{ today|date:"d M Y" }}</div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-espresso h-100">
+            <div class="stat-icon"><i class="fa-solid fa-coins"></i></div>
+            <div class="stat-value">{{ weekly_revenue|floatformat:0 }}</div>
+            <div class="stat-label">Revenue (UGX)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-danger h-100">
+            <div class="stat-icon"><i class="fa-solid fa-cart-flatbed"></i></div>
+            <div class="stat-value">{{ weekly_cogs|floatformat:0 }}</div>
+            <div class="stat-label">Cost of Goods</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-terra h-100">
+            <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+            <div class="stat-value">{{ weekly_profit|floatformat:0 }}</div>
+            <div class="stat-label">Gross Profit</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-warm h-100">
+            <div class="stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            <div class="stat-value">{{ outstanding_credit|floatformat:0 }}</div>
+            <div class="stat-label">Outstanding Credit</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Top 10 Products -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="fa-solid fa-trophy" style="color:var(--terra)"></i>
+                <span>Top 10 Selling Items This Week</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Qty Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in top_10 %}
+                            <tr>
+                                <td>
+                                    {% if forloop.counter == 1 %}<i class="fa-solid fa-medal" style="color:var(--terra)"></i>
+                                    {% elif forloop.counter == 2 %}<i class="fa-solid fa-medal" style="color:#95a5a6"></i>
+                                    {% elif forloop.counter == 3 %}<i class="fa-solid fa-medal" style="color:#ca6f1e"></i>
+                                    {% else %}{{ forloop.counter }}{% endif %}
+                                </td>
+                                <td class="fw-bold">{{ item.product__name }}</td>
+                                <td class="text-muted">{{ item.product__category__name|default:"—" }}</td>
+                                <td>{{ item.total_qty }}</td>
+                                <td class="fw-bold" style="color:var(--success)">{{ item.total_rev|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-4">No sales this week</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Credits -->
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="fa-solid fa-clock" style="color:var(--danger)"></i>
+                <span>Overdue Credits</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                            <tr><th>Customer</th><th>Due</th><th>Balance</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for c in overdue %}
+                            <tr>
+                                <td class="fw-bold">{{ c.customer.name }}</td>
+                                <td class="text-danger small">{{ c.repayment_date|date:"d M" }}</td>
+                                <td class="fw-bold text-danger">{{ c.balance_due|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-success py-3"><i class="fa-solid fa-circle-check me-1"></i>No overdue credits!</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alerts -->
+{% if low_stock %}
+<div class="card mb-4 border-warning">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#fef9e7">
+        <i class="fa-solid fa-triangle-exclamation" style="color:var(--terra)"></i>
+        <span class="fw-bold">Stock Restocking Alerts ({{ low_stock.count }} items)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr><th>Product</th><th>Category</th><th>Current Stock</th><th>Threshold</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for p in low_stock %}
+                    <tr>
+                        <td class="fw-bold">{{ p.name }} {% if p.is_essential %}<span class="badge bg-danger ms-1" style="font-size:.7rem">Essential</span>{% endif %}</td>
+                        <td>{{ p.category.name|default:"—" }}</td>
+                        <td class="{% if p.stock_quantity == 0 %}stock-out{% else %}stock-low{% endif %} fw-bold">{{ p.stock_quantity }} {{ p.get_unit_display }}</td>
+                        <td class="text-muted">{{ p.low_stock_threshold }}</td>
+                        <td>
+                            <a href="{% url 'restock_product' p.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fa-solid fa-plus me-1"></i>Restock
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Payment Method Breakdown -->
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="fa-solid fa-credit-card" style="color:var(--espresso)"></i>
+        <span>Payment Method Breakdown</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for p in payment_stats %}
+            <div class="col-12 col-sm-4">
+                <div class="p-3 rounded-3 text-center
+                    {% if p.payment_method == 'cash' %}bg-success bg-opacity-10
+                    {% elif p.payment_method == 'mobile_money' %}bg-primary bg-opacity-10
+                    {% else %}bg-danger bg-opacity-10{% endif %}">
+                    {% if p.payment_method == 'cash' %}
+                        <i class="fa-solid fa-money-bill-wave fa-2x mb-2" style="color:var(--success)"></i>
+                        <div class="fw-bold">Cash</div>
+                    {% elif p.payment_method == 'mobile_money' %}
+                        <i class="fa-solid fa-mobile-screen fa-2x mb-2" style="color:var(--terra-light)"></i>
+                        <div class="fw-bold">Mobile Money</div>
+                    {% else %}
+                        <i class="fa-solid fa-file-invoice-dollar fa-2x mb-2" style="color:var(--danger)"></i>
+                        <div class="fw-bold">Credit</div>
+                    {% endif %}
+                    <div style="font-size:1.4rem; font-weight:800; font-family:'Poppins',sans-serif">{{ p.total|floatformat:0 }}</div>
+                    <div class="text-muted small">{{ p.count }} transactions</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col text-center text-muted py-3">No payment data</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

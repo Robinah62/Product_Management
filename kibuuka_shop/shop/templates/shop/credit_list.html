@@ -1,0 +1,104 @@
+{% extends 'shop/base.html' %}
+{% block title %}Credit Book – Kibuuka's Shop{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <div class="page-title"><i class="fa-solid fa-hand-holding-dollar me-2" style="color:var(--espresso)"></i>Credit Book</div>
+        <div class="page-subtitle">Track customer credit and repayments</div>
+    </div>
+    {% if request.user.is_staff %}
+    <a href="{% url 'add_credit' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-1"></i> Add Credit
+    </a>
+    {% endif %}
+</div>
+
+<!-- Outstanding Banner -->
+<div class="alert d-flex align-items-center gap-3 mb-4" style="background:linear-gradient(135deg,var(--danger),var(--danger));color:var(--white);border:none;border-radius:12px">
+    <i class="fa-solid fa-hand-holding-dollar fa-2x"></i>
+    <div>
+        <div style="font-size:1.6rem;font-weight:800;font-family:'Poppins',sans-serif;">{{ total_outstanding|floatformat:0 }} UGX</div>
+        <div style="opacity:.85;font-size:.85rem;">Total Outstanding Credit</div>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-sm-4">
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="unpaid" {% if status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                    <option value="partial" {% if status == 'partial' %}selected{% endif %}>Partial</option>
+                    <option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option>
+                </select>
+            </div>
+            <div class="col-12 col-sm-3">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter me-1"></i>Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Credits Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for credit in credits %}
+                    <tr>
+                        <td class="fw-bold">{{ credit.customer.name }}</td>
+                        <td>{{ credit.product.name|default:"—" }}</td>
+                        <td>{{ credit.quantity }}</td>
+                        <td>{{ credit.total_amount|floatformat:0 }}</td>
+                        <td class="text-success fw-bold">{{ credit.amount_paid|floatformat:0 }}</td>
+                        <td class="fw-bold {% if credit.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ credit.balance_due|floatformat:0 }}
+                        </td>
+                        <td class="{% if credit.repayment_date < today and credit.status != 'paid' %}text-danger fw-bold{% else %}text-muted{% endif %} small">
+                            {{ credit.repayment_date|date:"d M Y" }}
+                            {% if credit.repayment_date < today and credit.status != 'paid' %}
+                            <span class="badge bg-danger ms-1" style="font-size:.65rem">Overdue</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ credit.status }} px-2 py-1">
+                                {{ credit.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'credit_detail' credit.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-5">
+                            <i class="fa-solid fa-hand-holding-dollar fa-2x mb-2 d-block"></i>
+                            No credit records found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

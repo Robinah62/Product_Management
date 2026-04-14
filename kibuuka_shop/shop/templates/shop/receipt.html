@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt #{{ sale.pk }} – Kibuuka's Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --cream:       #F2E4D0;
+            --cream-dark:  #DFD0B8;
+            --cream-light: #FAF6F0;
+            --terra:       #B07850;
+            --terra-dark:  #8C5C38;
+            --espresso:    #2C1A0E;
+            --espresso-mid:#4A2E1A;
+            --white:       #FFFFFF;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--cream-light);
+            color: var(--espresso);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 20px 60px;
+        }
+
+        /* ── BACK / PRINT buttons (hidden on print) ── */
+        .action-bar {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--white);
+            border: 2px solid var(--cream-dark);
+            color: var(--espresso);
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: .88rem;
+            text-decoration: none;
+            transition: all .2s;
+            cursor: pointer;
+        }
+        .btn-back:hover { background: var(--cream); border-color: var(--terra); color: var(--espresso); }
+        .btn-print {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--espresso);
+            border: 2px solid var(--espresso);
+            color: var(--cream);
+            padding: 9px 22px;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: .88rem;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-print:hover { background: var(--terra); border-color: var(--terra); color: var(--white); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(176,120,80,.4); }
+
+        /* ── RECEIPT PAPER ── */
+        .receipt {
+            width: 100%;
+            max-width: 420px;
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(44,26,14,.14);
+            border: 1.5px solid var(--cream-dark);
+        }
+
+        /* Header */
+        .receipt-header {
+            background: var(--espresso);
+            padding: 28px 28px 22px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .receipt-header::before {
+            content: '';
+            position: absolute;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            border: 40px solid rgba(176,120,80,.12);
+            top: -80px; right: -60px;
+        }
+        .receipt-header::after {
+            content: '';
+            position: absolute;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            border: 30px solid rgba(242,228,208,.06);
+            bottom: -60px; left: -40px;
+        }
+        .receipt-logo {
+            width: 52px; height: 52px;
+            background: var(--terra);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+            position: relative; z-index: 1;
+        }
+        .receipt-logo i { font-size: 1.5rem; color: var(--white); }
+        .receipt-shop-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--cream);
+            position: relative; z-index: 1;
+        }
+        .receipt-shop-sub {
+            color: var(--terra-light);
+            font-size: .78rem;
+            margin-top: 4px;
+            position: relative; z-index: 1;
+        }
+
+        /* Receipt number banner */
+        .receipt-number-bar {
+            background: var(--terra);
+            padding: 10px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .receipt-number-bar span {
+            color: var(--white);
+            font-weight: 800;
+            font-size: .85rem;
+            letter-spacing: .02em;
+        }
+        .receipt-number-bar .badge-method {
+            background: rgba(255,255,255,.2);
+            color: var(--white);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: .75rem;
+            font-weight: 700;
+        }
+
+        /* Body */
+        .receipt-body { padding: 24px 28px; }
+
+        .receipt-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1.5px dashed var(--cream-dark);
+        }
+        .meta-item label {
+            display: block;
+            font-size: .68rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #B8A090;
+            font-weight: 800;
+            margin-bottom: 3px;
+        }
+        .meta-item span {
+            font-size: .88rem;
+            font-weight: 700;
+            color: var(--espresso);
+        }
+
+        /* Items table */
+        .receipt-items-header {
+            display: grid;
+            grid-template-columns: 1fr 60px 90px;
+            gap: 8px;
+            font-size: .68rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--terra-dark);
+            font-weight: 800;
+            padding: 8px 0;
+            border-bottom: 1.5px solid var(--cream-dark);
+            margin-bottom: 8px;
+        }
+        .receipt-items-header span:not(:first-child) { text-align: right; }
+
+        .receipt-item {
+            display: grid;
+            grid-template-columns: 1fr 60px 90px;
+            gap: 8px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--cream);
+            align-items: start;
+        }
+        .item-name { font-weight: 700; font-size: .9rem; color: var(--espresso); }
+        .item-unit { font-size: .75rem; color: #B8A090; margin-top: 2px; }
+        .item-qty { text-align: right; font-size: .9rem; font-weight: 700; color: var(--espresso-mid); }
+        .item-total { text-align: right; font-size: .9rem; font-weight: 800; color: var(--espresso); }
+
+        /* Totals */
+        .receipt-totals {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1.5px dashed var(--cream-dark);
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: .88rem;
+        }
+        .total-row label { color: var(--muted, #8C7060); font-weight: 600; }
+        .total-row span { font-weight: 700; color: var(--espresso); }
+        .total-row.grand {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid var(--espresso);
+            font-size: 1.05rem;
+        }
+        .total-row.grand label { font-weight: 800; color: var(--espresso); }
+        .total-row.grand span { font-weight: 800; color: var(--espresso); font-family: 'Poppins', sans-serif; font-size: 1.1rem; }
+
+        /* Payment confirmed */
+        .payment-confirmed {
+            margin-top: 20px;
+            background: var(--cream-light);
+            border: 1.5px solid var(--cream-dark);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .payment-confirmed .check-icon {
+            width: 38px; height: 38px;
+            background: var(--terra);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .payment-confirmed .check-icon i { color: var(--white); font-size: 1rem; }
+        .payment-confirmed .confirm-text label { font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; color: #B8A090; font-weight: 800; display: block; }
+        .payment-confirmed .confirm-text span { font-size: .9rem; font-weight: 700; color: var(--espresso); }
+
+        /* Ka Money notice */
+        .ka-money-notice {
+            margin-top: 16px;
+            background: linear-gradient(135deg, var(--terra), var(--terra-dark));
+            border-radius: 10px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--white);
+        }
+        .ka-money-notice i { font-size: 1.4rem; opacity: .9; }
+        .ka-money-notice div label { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; opacity: .8; display: block; }
+        .ka-money-notice div span { font-size: .92rem; font-weight: 700; }
+
+        /* Footer */
+        .receipt-footer {
+            padding: 20px 28px 24px;
+            text-align: center;
+            border-top: 1.5px dashed var(--cream-dark);
+            margin-top: 20px;
+        }
+        .receipt-footer .thank-you {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--espresso);
+            margin-bottom: 6px;
+        }
+        .receipt-footer p { font-size: .78rem; color: #B8A090; line-height: 1.5; }
+
+        /* Tear line */
+        .tear-line {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            position: relative;
+        }
+        .tear-line::before {
+            content: '';
+            flex: 1;
+            border-top: 1.5px dashed var(--cream-dark);
+        }
+        .tear-line::after {
+            content: '';
+            flex: 1;
+            border-top: 1.5px dashed var(--cream-dark);
+        }
+        .tear-circle {
+            width: 20px; height: 20px;
+            background: var(--cream-light);
+            border: 1.5px solid var(--cream-dark);
+            border-radius: 50%;
+            margin: 0 -10px;
+            z-index: 1;
+            flex-shrink: 0;
+        }
+        .tear-circles { display: flex; justify-content: space-between; padding: 0; }
+
+        /* ══════ PRINT STYLES ══════ */
+        @media print {
+            body { background: white; padding: 0; }
+            .action-bar { display: none !important; }
+            .receipt {
+                max-width: 100%;
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+            }
+            .receipt-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .receipt-number-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .ka-money-notice { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .payment-confirmed .check-icon { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Action Bar (hidden on print) -->
+<div class="action-bar">
+    <a href="{% url 'sales_list' %}" class="btn-back">
+        <i class="fa-solid fa-arrow-left"></i> Back to Sales
+    </a>
+    <button onclick="window.print()" class="btn-print">
+        <i class="fa-solid fa-print"></i> Print Receipt
+    </button>
+</div>
+
+<!-- RECEIPT PAPER -->
+<div class="receipt">
+
+    <!-- Header -->
+    <div class="receipt-header">
+        <div class="receipt-logo"><i class="fa-solid fa-store"></i></div>
+        <div class="receipt-shop-name">Kibuuka's Corner Shop</div>
+        <div class="receipt-shop-sub">
+            <i class="fa-solid fa-location-dot me-1"></i>Nateete Market, Kampala
+            &nbsp;·&nbsp;
+            <i class="fa-solid fa-phone me-1"></i>+256 700 000 000
+        </div>
+    </div>
+
+    <!-- Receipt Number Bar -->
+    <div class="receipt-number-bar">
+        <span><i class="fa-solid fa-receipt me-1"></i>Receipt #{{ sale.pk|stringformat:"06d" }}</span>
+        <span class="badge-method">
+            {% if sale.payment_method == 'cash' %}
+            <i class="fa-solid fa-money-bill-wave me-1"></i>Cash
+            {% else %}
+            <i class="fa-solid fa-mobile-screen me-1"></i>Mobile Money
+            {% endif %}
+        </span>
+    </div>
+
+    <!-- Body -->
+    <div class="receipt-body">
+
+        <!-- Meta info -->
+        <div class="receipt-meta">
+            <div class="meta-item">
+                <label>Date</label>
+                <span>{{ sale.sold_at|date:"d M Y" }}</span>
+            </div>
+            <div class="meta-item" style="text-align:center">
+                <label>Time</label>
+                <span>{{ sale.sold_at|date:"H:i" }}</span>
+            </div>
+            <div class="meta-item" style="text-align:right">
+                <label>Served by</label>
+                <span>{{ sale.sold_by.get_full_name|default:sale.sold_by.username|default:"—" }}</span>
+            </div>
+        </div>
+
+        {% if sale.customer %}
+        <div class="meta-item mb-4">
+            <label style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#B8A090;font-weight:800;display:block;margin-bottom:3px">Customer</label>
+            <span style="font-weight:700;font-size:.9rem">{{ sale.customer.name }}</span>
+            {% if sale.customer.contact %}<span style="color:#B8A090;font-size:.82rem;margin-left:8px">{{ sale.customer.contact }}</span>{% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Items -->
+        <div class="receipt-items-header">
+            <span>Item</span>
+            <span>Qty</span>
+            <span>Amount</span>
+        </div>
+
+        <div class="receipt-item">
+            <div>
+                <div class="item-name">{{ sale.product.name }}</div>
+                <div class="item-unit">{{ sale.product.get_unit_display }}</div>
+            </div>
+            <div class="item-qty">{{ sale.quantity }}</div>
+            <div class="item-total">{{ sale.total_amount|floatformat:0 }}</div>
+        </div>
+
+        <!-- Totals -->
+        <div class="receipt-totals">
+            <div class="total-row">
+                <label>Unit Price</label>
+                <span>{{ sale.unit_price|floatformat:0 }} UGX</span>
+            </div>
+            <div class="total-row">
+                <label>Quantity</label>
+                <span>{{ sale.quantity }}</span>
+            </div>
+            <div class="total-row grand">
+                <label>TOTAL PAID</label>
+                <span>{{ sale.total_amount|floatformat:0 }} UGX</span>
+            </div>
+        </div>
+
+        <!-- Payment Confirmed -->
+        <div class="payment-confirmed">
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <div class="confirm-text">
+                <label>Payment Status</label>
+                <span>
+                    {% if sale.payment_method == 'cash' %}
+                    <i class="fa-solid fa-money-bill-wave" style="color:#3D6B4A;margin-right:5px"></i>Cash Payment Received
+                    {% else %}
+                    <i class="fa-solid fa-mobile-screen" style="color:#B07850;margin-right:5px"></i>Mobile Money Confirmed
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Ka Money (only for mobile money) -->
+        {% if sale.payment_method == 'mobile_money' and sale.customer %}
+        <div class="ka-money-notice">
+            <i class="fa-solid fa-jar"></i>
+            <div>
+                <label>Ka Money Earned</label>
+                <span>+500 UGX added to {{ sale.customer.name }}'s savings jar!</span>
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /receipt-body -->
+
+    <!-- Tear line -->
+    <div style="padding:0 10px;margin:0 -1px">
+        <div style="display:flex;align-items:center">
+            <div style="width:20px;height:20px;background:var(--cream-light);border-radius:50%;border:1.5px solid var(--cream-dark);margin-left:-10px;flex-shrink:0"></div>
+            <div style="flex:1;border-top:1.5px dashed var(--cream-dark)"></div>
+            <div style="width:20px;height:20px;background:var(--cream-light);border-radius:50%;border:1.5px solid var(--cream-dark);margin-right:-10px;flex-shrink:0"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="receipt-footer">
+        <div class="thank-you">Thank You for Shopping with Us!</div>
+        <p>
+            Goods once sold are not returnable without a receipt.<br>
+            Keep this receipt as proof of purchase.<br>
+            <strong style="color:var(--terra)">Kibuuka's Corner Shop</strong> – Nateete Market
+        </p>
+    </div>
+
+</div><!-- /receipt -->
+
+<script>
+    // Auto-trigger print dialog if ?print=1
+    if (new URLSearchParams(window.location.search).get('print') === '1') {
+        window.onload = () => window.print();
+    }
+</script>
+</body>
+</html>

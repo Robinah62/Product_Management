@@ -1,0 +1,190 @@
+{% extends 'shop/base.html' %}
+{% block title %}Dashboard – Kibuuka's Shop{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <div class="page-title"><i class="fa-solid fa-gauge-high me-2" style="color:var(--espresso)"></i>Dashboard</div>
+        <div class="page-subtitle">Welcome back, {{ request.user.get_full_name|default:request.user.username }} &bull; {{ today|date:"l, d F Y" }}</div>
+    </div>
+    <a href="{% url 'add_sale' %}" class="btn btn-primary">
+        <i class="fa-solid fa-cash-register me-1"></i> Record Sale
+    </a>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-espresso h-100">
+            <div class="stat-icon"><i class="fa-solid fa-coins"></i></div>
+            <div class="stat-value">{{ today_revenue|floatformat:0 }}</div>
+            <div class="stat-label">Today's Revenue (UGX)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-terra h-100">
+            <div class="stat-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+            <div class="stat-value">{{ today_sales_count }}</div>
+            <div class="stat-label">Sales Today</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-warm h-100">
+            <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="stat-value">{{ low_stock_items }}</div>
+            <div class="stat-label">Low Stock Items</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-danger h-100">
+            <div class="stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            <div class="stat-value">{{ total_outstanding|floatformat:0 }}</div>
+            <div class="stat-label">Outstanding Credit</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Weekly Revenue -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="fa-solid fa-chart-bar" style="color:var(--espresso)"></i>
+                <span>This Week</span>
+            </div>
+            <div class="card-body text-center py-4">
+                <div style="font-size:2rem; font-weight:800; color:#1a5276; font-family:'Poppins',sans-serif">
+                    {{ weekly_revenue|floatformat:0 }}
+                </div>
+                <div class="text-muted small">UGX Weekly Revenue</div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="fw-bold" style="color:var(--danger)">{{ out_of_stock }}</div>
+                        <div class="text-muted" style="font-size:.75rem">Out of Stock</div>
+                    </div>
+                    <div class="col">
+                        <div class="fw-bold" style="color:var(--danger)">{{ overdue_credits }}</div>
+                        <div class="text-muted" style="font-size:.75rem">Overdue Credits</div>
+                    </div>
+                    <div class="col">
+                        <div class="fw-bold" style="color:var(--espresso)">{{ total_products }}</div>
+                        <div class="text-muted" style="font-size:.75rem">Products</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Breakdown -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="fa-solid fa-credit-card" style="color:var(--espresso)"></i>
+                <span>Payment Methods (This Week)</span>
+            </div>
+            <div class="card-body">
+                {% for p in payment_breakdown %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        {% if p.payment_method == 'cash' %}
+                            <i class="fa-solid fa-money-bill-wave fa-lg" style="color:var(--success)"></i>
+                            <span class="fw-600">Cash</span>
+                        {% elif p.payment_method == 'mobile_money' %}
+                            <i class="fa-solid fa-mobile-screen fa-lg" style="color:#2e86c1"></i>
+                            <span class="fw-600">Mobile Money</span>
+                        {% else %}
+                            <i class="fa-solid fa-file-invoice-dollar fa-lg" style="color:var(--danger)"></i>
+                            <span class="fw-600">Credit</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">{{ p.total|floatformat:0 }} UGX</div>
+                        <div class="text-muted" style="font-size:.75rem">{{ p.count }} sales</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">No sales this week yet</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="fa-solid fa-trophy" style="color:var(--terra)"></i>
+                <span>Top Products (7 Days)</span>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for item in top_products %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge me-2" style="background:var(--espresso); font-size:.7rem">{{ forloop.counter }}</span>
+                            <span class="fw-600" style="font-size:.88rem">{{ item.product__name }}</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold" style="font-size:.85rem; color:#27ae60">{{ item.total_rev|floatformat:0 }}</div>
+                            <div class="text-muted" style="font-size:.72rem">{{ item.total_qty }} sold</div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center text-muted py-3">No sales yet</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sales -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-receipt" style="color:var(--espresso)"></i>
+            <span>Recent Sales</span>
+        </div>
+        <a href="{% url 'sales_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Sold By</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in recent_sales %}
+                    <tr>
+                        <td class="fw-600">{{ sale.product.name }}</td>
+                        <td>{{ sale.quantity }}</td>
+                        <td class="fw-bold" style="color:var(--success)">{{ sale.total_amount|floatformat:0 }}</td>
+                        <td>
+                            {% if sale.payment_method == 'cash' %}
+                                <span class="badge bg-success-subtle text-success">Cash</span>
+                            {% elif sale.payment_method == 'mobile_money' %}
+                                <span class="badge bg-primary-subtle text-primary">Mobile Money</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger">Credit</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ sale.sold_by.username|default:"—" }}</td>
+                        <td class="text-muted" style="font-size:.8rem">{{ sale.sold_at|date:"d M, H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No sales recorded yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

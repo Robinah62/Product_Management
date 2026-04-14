@@ -1,0 +1,29 @@
+{% extends 'shop/base.html' %}
+{% block title %}Redeem Ka Money – Kibuuka's Shop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card" style="border:2px solid var(--terra)">
+            <div class="card-body text-center p-5">
+                <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--terra),#e67e22);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 8px 20px rgba(243,156,18,.35)">
+                    <i class="fa-solid fa-jar fa-2x" style="color:var(--white)"></i>
+                </div>
+                <h5 class="fw-bold mb-1">Redeem Ka Money</h5>
+                <p class="text-muted small mb-3">for <strong>{{ customer.name }}</strong></p>
+                <div style="font-size:2.5rem;font-weight:800;color:var(--terra);font-family:'Poppins',sans-serif">
+                    {{ customer.ka_money_balance|floatformat:0 }} UGX
+                </div>
+                <p class="text-muted mb-4" style="font-size:.85rem">will be redeemed. The customer's Ka Money balance and purchase count will reset to zero.</p>
+                <form method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning flex-fill fw-bold text-white">
+                        <i class="fa-solid fa-gift me-1"></i>Confirm Redemption
+                    </button>
+                    <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-outline-secondary flex-fill">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

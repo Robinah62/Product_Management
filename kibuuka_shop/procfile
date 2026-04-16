@@ -1,0 +1,1 @@
+web: gunicorn kibuuka_shop.wsgi --log-file -

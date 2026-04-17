@@ -80,10 +80,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 
-ALLOWED_HOSTS = ['productmanagement-production-689d.up.railway.app']
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".railway.app",
+]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://productmanagement-production-689d.up.railway.app"
+    "https://*.railway.app",
 ]
 
 CSRF_COOKIE_SECURE = False

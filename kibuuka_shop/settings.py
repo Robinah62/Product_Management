@@ -100,3 +100,10 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 CSRF_COOKIE_HTTPONLY = False
 CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+
+import os  # make sure this exists
+
+STATIC_URL = '/static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

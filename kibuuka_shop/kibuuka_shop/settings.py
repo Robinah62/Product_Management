@@ -80,12 +80,19 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 
+ALLOWED_HOSTS = ['productmanagement-production-689d.up.railway.app']
+
 CSRF_TRUSTED_ORIGINS = [
     "https://productmanagement-production-689d.up.railway.app"
 ]
 
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
+
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+CSRF_COOKIE_HTTPONLY = False
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
